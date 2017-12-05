@@ -2,7 +2,6 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using LibGit2Sharp;
 using Microsoft.Data.Sqlite;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;

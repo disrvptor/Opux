@@ -10,7 +10,6 @@ using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using WS4NetCore;
 
 namespace Opux
 {
@@ -41,7 +40,7 @@ namespace Opux
                 Settings = new ConfigurationBuilder()
                 .SetBasePath(ApplicationBase)
                 .AddJsonFile("settings.json", optional: true, reloadOnChange: true).Build();
-                Client = new DiscordSocketClient(new DiscordSocketConfig() { WebSocketProvider = WS4NetProvider.Instance });
+                Client = new DiscordSocketClient(new DiscordSocketConfig() { });
                 Commands = new CommandService();
                 EveLib = new EveLib();
                 MainAsync(args).GetAwaiter().GetResult();
