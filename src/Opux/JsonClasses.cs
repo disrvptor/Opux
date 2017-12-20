@@ -23,26 +23,6 @@ namespace Opux
 
         public class CharacterData
         {
-            public int corporation_id { get; set; }
-            public DateTime birthday { get; set; }
-            public string name { get; set; }
-            public string gender { get; set; }
-            public int race_id { get; set; }
-            public int bloodline_id { get; set; }
-            public string description { get; set; }
-            public int alliance_id { get; set; } = -1;
-            public int ancestry_id { get; set; }
-            public float security_status { get; set; }
-        }
-
-
-        public class Rootobject
-        {
-            public Characterdata CharacterData { get; set; }
-        }
-
-        public class Characterdata
-        {
             public string name { get; set; }
             public string description { get; set; }
             public int corporation_id { get; set; }

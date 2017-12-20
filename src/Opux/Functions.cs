@@ -152,7 +152,7 @@ namespace Opux
         #region Pricecheck
         internal async static Task PriceCheck(ICommandContext context, string String, string system)
         {
-            //var NametoId = "https://esi.tech.ccp.is/latest/search/?categories=inventorytype&datasource=tranquility&language=en-us&search=Plex&strict=true";
+            //var NametoId = "https://esi.tech.ccp.is/latest/search/?categories=inventory_type&datasource=tranquility&language=en-us&search=Plex&strict=true";
 
             var channel = context.Message.Channel;
             if (String.ToLower() == "short name")
@@ -160,7 +160,7 @@ namespace Opux
                 String = "Item Name";
             }
 
-            var result = await Program._httpClient.GetAsync($"https://esi.tech.ccp.is/latest/search/?categories=inventorytype&datasource=tranquility&language=en-us&search={String}&strict=true");
+            var result = await Program._httpClient.GetAsync($"https://esi.tech.ccp.is/latest/search/?categories=inventory_type&datasource=tranquility&language=en-us&search={String}&strict=true");
 
             if (!result.IsSuccessStatusCode)
             {
