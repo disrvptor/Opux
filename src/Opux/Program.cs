@@ -34,6 +34,9 @@ namespace Opux
 
         static Timer stateTimer = new Timer(Functions.RunTick, autoEvent, 100, 100);
 
+        static object ExitLock = new object();
+        static ManualResetEventSlim ended = new ManualResetEventSlim();
+
         public static void Main(string[] args)
         {
             ApplicationBase = Path.GetDirectoryName(new Uri(Assembly.GetEntryAssembly().CodeBase).LocalPath);
