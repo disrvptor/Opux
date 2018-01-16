@@ -66,6 +66,7 @@ namespace Opux
                         debug = true;
                     }
 
+                    //AssemblyLoadContext.GetLoadContext(typeof(Program).GetTypeInfo().Assembly)
                     System.Runtime.Loader.AssemblyLoadContext.Default.Unloading += ctx =>
                     {
     					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Received termination signal")).Wait();
