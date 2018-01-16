@@ -53,9 +53,36 @@ namespace Opux
             EveLib = new EveLib();
             MainAsync(args).GetAwaiter().GetResult();
 
-            var headless = Convert.ToBoolean(Settings.GetSection("config")["Systemd_Support"]);
+            if (Convert.ToBoolean(Settings.GetSection("config")["Systemd_Support"]) == false) {
+            var dockerMode = Environment.GetEnvironmentVariable("DOCKER_MODE");
+            if ( dockerMode != null ) {
+                Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Docker mode enabled")).Wait();
+                if ( dockerMode == "debug" ) {
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Debug mode enabled")).Wait();
+                    debug = true;
+                }
 
-            if (!headless)
+                //AssemblyLoadContext.GetLoadContext(typeof(Program).GetTypeInfo().Assembly)
+                System.Runtime.Loader.AssemblyLoadContext.Default.Unloading += ctx =>
+                {
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Received termination signal")).Wait();
+                    lock(ExitLock)
+                    {
+                        Monitor.Pulse(ExitLock);
+                    }
+                    ended.Wait();
+                };
+
+                lock(ExitLock)
+                {
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Waiting for termination")).Wait();
+                    Monitor.Wait(ExitLock);
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Exiting")).Wait();
+                    quit = true;
+                }
+            }
+
+            while (!quit)
             {
                 var dockerMode = Environment.GetEnvironmentVariable("DOCKER_MODE");
                 if ( dockerMode != null ) {
