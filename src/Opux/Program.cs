@@ -32,9 +32,11 @@ namespace Opux
 
         static Timer stateTimer = new Timer(Functions.RunTick, autoEvent, 100, 100);
 
+        static object ExitLock = new object();
+        static ManualResetEventSlim ended = new ManualResetEventSlim();
+
         public static void Main(string[] args)
         {
-
             ApplicationBase = Path.GetDirectoryName(new Uri(Assembly.GetEntryAssembly().CodeBase).LocalPath);
             if (!File.Exists(Path.Combine(Program.ApplicationBase, "Opux.db")))
                 File.Copy(ApplicationBase + "/Opux.def.db", Path.Combine(Program.ApplicationBase, "Opux.db"));
@@ -49,7 +51,36 @@ namespace Opux
             EveLib = new EveLib();
             MainAsync(args).GetAwaiter().GetResult();
 
-            if (Convert.ToBoolean(Settings.GetSection("config")["Systemd_Support"]) == false)
+            if (Convert.ToBoolean(Settings.GetSection("config")["Systemd_Support"]) == false) {
+            var dockerMode = Environment.GetEnvironmentVariable("DOCKER_MODE");
+            if ( dockerMode != null ) {
+                Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Docker mode enabled")).Wait();
+                if ( dockerMode == "debug" ) {
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Debug mode enabled")).Wait();
+                    debug = true;
+                }
+
+                //AssemblyLoadContext.GetLoadContext(typeof(Program).GetTypeInfo().Assembly)
+                System.Runtime.Loader.AssemblyLoadContext.Default.Unloading += ctx =>
+                {
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Received termination signal")).Wait();
+                    lock(ExitLock)
+                    {
+                        Monitor.Pulse(ExitLock);
+                    }
+                    ended.Wait();
+                };
+
+                lock(ExitLock)
+                {
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Waiting for termination")).Wait();
+                    Monitor.Wait(ExitLock);
+					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Exiting")).Wait();
+                    quit = true;
+                }
+            }
+
+            while (!quit)
             {
                 while (!quit)
                 {
@@ -90,6 +121,7 @@ namespace Opux
                 }
             }
             Client.StopAsync();
+            ended.Set();
         }
 
         internal static async Task LoggerAsync(Exception args)
