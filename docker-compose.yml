@@ -1,4 +1,4 @@
-version: '2.1'
+version: '3.1'
 
 services:
   app:
@@ -6,14 +6,16 @@ services:
     image: opux
     environment:
       DOCKER_MODE: ""
+      MYSQL_HOST: "mysql"
     volumes:
       - ./settings.json:/app/bin/Debug/netcoreapp2.0/settings.json
       - ./logs:/app/bin/Debug/netcoreapp2.0/logs
+    ports:
+      - 8080:80
     links:
       - db:mysql
     depends_on:
-      db:
-        condition: service_healthy
+      - db
 
   db:
     image: mariadb:10.2
@@ -26,8 +28,10 @@ services:
     volumes:
       - opux-data:/var/lib/mysql
       - ./schema.sql:/docker-entrypoint-initdb.d/00-schema.sql
+      - ./db-healthcheck.sql:/db-healthcheck.sh
     healthcheck:
-      test: ["CMD", "mysqladmin", "--host=localhost", "--password=password", "--user=discord", "ping"]
+      #test: ["CMD", "mysqladmin", "--host=localhost", "--password=password", "--user=discord", "ping"]
+      test: ["CMD", "/db-healthcheck.sh"]
       interval: 10s
       timeout: 3s
       retries: 5
