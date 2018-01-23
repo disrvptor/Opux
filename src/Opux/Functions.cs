@@ -817,6 +817,10 @@ namespace Opux
                                 await Client_Log(new LogMessage(LogSeverity.Error, "AuthWeb", $"Error: {ex.Message}", ex));
                             }
                         }
+                        else
+                        {
+                            await Client_Log(new LogMessage(LogSeverity.Warning, "AuthWeb", $"Received bogus request at {request.Url.LocalPath}"));
+                        }
                     }
                     else
                     {

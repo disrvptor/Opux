@@ -48,41 +48,36 @@ namespace Opux
 
             UpdateSettings();
 
+            // check for headless (docker or systemd) mode
+            var headless = Convert.ToBoolean(Settings.GetSection("config")["Systemd_Support"]);
+            var dockerMode = Environment.GetEnvironmentVariable("DOCKER_MODE");
+            if ( dockerMode != null ) {
+                headless = true;
+                Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Docker mode enabled")).Wait();
+                if ( dockerMode == "debug" ) {
+                    Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Debug mode enabled")).Wait();
+                    debug = true;
+                }
+
+                // Check for a MYSQL_HOST environment variable. If one is not defined then
+                // hardcode the value to "mysql"
+                var mysqlHost = Environment.GetEnvironmentVariable("MYSQL_HOST");
+                if ( String.IsNullOrWhiteSpace(mysqlHost) ) {
+                  mysqlHost = "mysql";
+                }
+
+                Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", $"Setting mysql host name to {mysqlHost}")).Wait();
+
+                // Update the Configuration
+                Settings.GetSection("mysqlConfig")["localhost"] = mysqlHost;
+            }
+
             Client = new DiscordSocketClient(new DiscordSocketConfig() { });
             Commands = new CommandService();
             EveLib = new EveLib();
             MainAsync(args).GetAwaiter().GetResult();
 
-            if (Convert.ToBoolean(Settings.GetSection("config")["Systemd_Support"]) == false) {
-            var dockerMode = Environment.GetEnvironmentVariable("DOCKER_MODE");
-            if ( dockerMode != null ) {
-                Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Docker mode enabled")).Wait();
-                if ( dockerMode == "debug" ) {
-					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Debug mode enabled")).Wait();
-                    debug = true;
-                }
-
-                //AssemblyLoadContext.GetLoadContext(typeof(Program).GetTypeInfo().Assembly)
-                System.Runtime.Loader.AssemblyLoadContext.Default.Unloading += ctx =>
-                {
-					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Received termination signal")).Wait();
-                    lock(ExitLock)
-                    {
-                        Monitor.Pulse(ExitLock);
-                    }
-                    ended.Wait();
-                };
-
-                lock(ExitLock)
-                {
-					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Waiting for termination")).Wait();
-                    Monitor.Wait(ExitLock);
-					Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Exiting")).Wait();
-                    quit = true;
-                }
-            }
-
-            while (!quit)
+            if ( !headless )
             {
                 var dockerMode = Environment.GetEnvironmentVariable("DOCKER_MODE");
                 if ( dockerMode != null ) {
@@ -146,17 +141,18 @@ namespace Opux
             {
                 Functions.Client_Log(new LogMessage(LogSeverity.Info, "Headless", "Headless mode enabled")).Wait();
 
+                //AssemblyLoadContext.GetLoadContext(typeof(Program).GetTypeInfo().Assembly)
                 System.Runtime.Loader.AssemblyLoadContext.Default.Unloading += ctx =>
                 {
                     Functions.Client_Log(new LogMessage(LogSeverity.Info, "Headless", "Received termination signal")).Wait();
-                    lock (ExitLock)
+                    lock(ExitLock)
                     {
                         Monitor.Pulse(ExitLock);
                     }
                     ended.Wait();
                 };
 
-                lock (ExitLock)
+                lock(ExitLock)
                 {
                     Functions.Client_Log(new LogMessage(LogSeverity.Info, "Headless", "Waiting for termination")).Wait();
                     Monitor.Wait(ExitLock);
