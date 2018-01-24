@@ -262,9 +262,18 @@ namespace Opux
                     var request = context.Request;
                     var response = context.Response;
 
+                    // Fixup the Request.Url for bad UriBuilder behavior. I
+                    // don't know that we are expecting https, but put it here
+                    // just in case.
+                    var requestUrl = request.Url;
+                    if ( !(requestUrl.Scheme.Equals("http") || requestUrl.Scheme.Equals("https")) ) {
+                        requestUrl = new UriBuilder("http://"+requestUrl.ToString()).Uri;
+                        await Client_Log(new LogMessage(LogSeverity.Warning, "AuthWeb", $"Fixing request URL from {request.Url.ToString()} to {requestUrl.ToString()}"));
+                    }
+
                     if (request.HttpMethod == HttpMethod.Get.ToString())
                     {
-                        if (request.Url.LocalPath == "/" || request.Url.LocalPath == $"{port}/")
+                        if (requestUrl.LocalPath == "/" || requestUrl.LocalPath == $"{port}/")
                         {
 
                             response.Headers.Add("Content-Type", "text/html");
@@ -365,7 +374,7 @@ namespace Opux
                                 "</body>" +
                                 "</html>");
                         }
-                        else if (request.Url.LocalPath == "/callback.php" || request.Url.LocalPath == $"{port}/callback.php")
+                        else if (requestUrl.LocalPath == "/callback.php" || requestUrl.LocalPath == $"{port}/callback.php")
                         {
                             try
                             {
@@ -383,12 +392,12 @@ namespace Opux
                                 var code = "";
                                 var add = false;
 
-                                if (!String.IsNullOrWhiteSpace(request.Url.Query))
+                                if (!String.IsNullOrWhiteSpace(requestUrl.Query))
                                 {
                                     _AuthWebHttpClient.DefaultRequestHeaders.Clear();
                                     _AuthWebHttpClient.DefaultRequestHeaders.Add("User-Agent", "OpuxBot");
 
-                                    code = request.Url.Query.TrimStart('?').Split('=')[1];
+                                    code = requestUrl.Query.TrimStart('?').Split('=')[1];
 
                                     var values = new Dictionary<string, string> { { "grant_type", "authorization_code" }, { "code", $"{code}" } };
 
@@ -819,7 +828,8 @@ namespace Opux
                         }
                         else
                         {
-                            await Client_Log(new LogMessage(LogSeverity.Warning, "AuthWeb", $"Received bogus request at {request.Url.LocalPath}"));
+                            // Log bad requests
+                            await Client_Log(new LogMessage(LogSeverity.Warning, "AuthWeb", $"Received bogus request at {requestUrl.ToString()}"));
                         }
                     }
                     else
