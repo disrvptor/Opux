@@ -8,7 +8,8 @@ services:
       DOCKER_MODE: ""
       MYSQL_HOST: "mysql"
     volumes:
-      - ./settings.json:/app/bin/Debug/netcoreapp2.0/settings.json
+      #- ./settings.json:/app/bin/Debug/netcoreapp2.0/settings.json
+      - ./settings.json:/app/settings.json
       - ./logs:/app/bin/Debug/netcoreapp2.0/logs
     ports:
       - 8080:80
