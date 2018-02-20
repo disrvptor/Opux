@@ -58,7 +58,6 @@ namespace Opux
             if (!headless)
             {
                 var dockerMode = Environment.GetEnvironmentVariable("DOCKER_MODE");
-
                 if ( dockerMode != null ) {
                     Functions.Client_Log(new LogMessage(LogSeverity.Info, "Docker", "Docker mode enabled")).Wait();
                     if ( dockerMode == "debug" ) {
